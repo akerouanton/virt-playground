@@ -130,13 +130,17 @@ func createVMConfig() (*vz.VirtualMachineConfiguration, error) {
 		return nil, err
 	}
 
-	consoleDeviceConfig, err := vz.NewVirtioConsoleDeviceSerialPortConfiguration(consoleAttachment)
-	if err != nil {
-		return nil, fmt.Errorf("creating console device config: %w", err)
-	}
-
 	vmConfig.SetSerialPortsVirtualMachineConfiguration([]*vz.VirtioConsoleDeviceSerialPortConfiguration{
 		consoleDeviceConfig,
+	})
+
+	entropyDeviceConfig, err := vz.NewVirtioEntropyDeviceConfiguration()
+	if err != nil {
+		return nil, fmt.Errorf("creating entropy device config: %w", err)
+	}
+
+	vmConfig.SetEntropyDevicesVirtualMachineConfiguration([]*vz.VirtioEntropyDeviceConfiguration{
+		entropyDeviceConfig,
 	})
 
 	if ok, err := vmConfig.Validate(); !ok || err != nil {

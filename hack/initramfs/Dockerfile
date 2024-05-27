@@ -46,6 +46,9 @@ COPY --from=build-busybox /lib/ld-musl-aarch64.so.1 /rootfs/lib/
 COPY --from=build-busybox /lib/libc.musl-aarch64.so.1 /rootfs/lib/
 COPY init /rootfs/init
 
+RUN mknod -m 644 /rootfs/dev/random c 1 8 && \
+    mknod -m 644 /rootfs/dev/urandom c 1 9
+
 RUN mkdir /boot && \
     cd /rootfs && \
     find . -print0 | cpio --null -ovt --format=newc | gzip -9 > /boot/initramfs
