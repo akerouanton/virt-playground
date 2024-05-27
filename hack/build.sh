@@ -8,6 +8,14 @@ BUSYBOX_VERSION=${BUSYBOX_VERSION:-1_36_0}
 
 while [ $# -ge 1 ]; do
     case "$1" in
+        virt)
+            go build -o build/virt ./cmd/virt
+            codesign --deep --force --options=runtime \
+                --entitlements=hack/entitlements.plist \
+                --sign - \
+                build/virt
+        ;;
+
         kernel)
             docker build \
                 --progress=plain \
@@ -51,10 +59,11 @@ while [ $# -ge 1 ]; do
             echo "ERROR: Unsupported command '$1'"
             echo ""
 
-            echo "Usage: $0 kernel|kernel-menuconfig|initramfs|busybox-menuconfig"
+            echo "Usage: $0 virt|kernel|kernel-menuconfig|initramfs|busybox-menuconfig"
             echo ""
 
             echo "Subcommands:"
+            echo "    virt:               Build the 'virt' binary"
             echo "    kernel:             Build the kernel"
             echo "    kernel-menuconfig:  Open Kernel's menuconfig"
             echo "    initramfs:          Build the 'init' binary and create the initramfs file"
