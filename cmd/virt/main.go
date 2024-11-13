@@ -4,11 +4,11 @@ import (
 	"context"
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
 
 	"github.com/akerouanton/virt-playground/pkg/virt"
 	"github.com/pkg/term/termios"
+	"golang.org/x/sync/errgroup"
 	"golang.org/x/sys/unix"
 )
 
@@ -21,24 +21,23 @@ func main() {
 	sigch := make(chan os.Signal, 1)
 	signal.Notify(sigch, syscall.SIGTERM)
 
-	wg := &sync.WaitGroup{}
 	ctx, cancel := context.WithCancel(context.Background())
+	eg, ctx := errgroup.WithContext(ctx)
 
-	wg.Add(2)
-	go func() {
+	eg.Go(func() error {
 		<-sigch
-
 		cancel()
-		wg.Done()
-	}()
+		return nil
+	})
 
-	go func() {
+	eg.Go(func() error {
 		setRawMode(os.Stdin)
-		virt.RunVM(ctx, vm)
-		wg.Done()
-	}()
+		return virt.RunVM(ctx, vm)
+	})
 
-	wg.Wait()
+	if err := eg.Wait(); err != nil {
+		panic(err)
+	}
 }
 
 // https://developer.apple.com/documentation/virtualization/running_linux_in_a_virtual_machine?language=objc#:~:text=Configure%20the%20Serial%20Port%20Device%20for%20Standard%20In%20and%20Out
