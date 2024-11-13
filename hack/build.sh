@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -o errexit
-[[ "${DEBUG:-}" != "" ]] && set -o xtrace
+set -o xtrace
 
 KERNEL_VERSION=${KERNEL_VERSION:-6.9.2}
 BUSYBOX_VERSION=${BUSYBOX_VERSION:-1_36_0}

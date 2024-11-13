@@ -2,20 +2,42 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/akerouanton/virt-playground/pkg/virt"
 	"github.com/pkg/term/termios"
+	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sys/unix"
 )
 
 func main() {
+	cmd := &cobra.Command{
+		Use:     "Launch a VM using macOS's Virtualization.framework",
+		Version: "v0.1",
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := run(); err != nil {
+				fmt.Fprintln(os.Stderr, "ERROR:", err.Error())
+				os.Exit(1)
+			}
+
+			return
+		},
+	}
+
+	if err := cmd.Execute(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
 	vm, err := virt.CreateVM()
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	sigch := make(chan os.Signal, 1)
@@ -35,9 +57,7 @@ func main() {
 		return virt.RunVM(ctx, vm)
 	})
 
-	if err := eg.Wait(); err != nil {
-		panic(err)
-	}
+	return eg.Wait()
 }
 
 // https://developer.apple.com/documentation/virtualization/running_linux_in_a_virtual_machine?language=objc#:~:text=Configure%20the%20Serial%20Port%20Device%20for%20Standard%20In%20and%20Out
