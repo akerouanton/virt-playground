@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/akerouanton/virt-playground/pkg/virt"
@@ -14,19 +15,37 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+const (
+	defKernelPath    = "build/vmlinux"
+	defInitramfsPath = "build/initramfs"
+)
+
+var defCmdline = []string{
+	"console=hvc0",
+	"root=/dev/ram0",
+	"earlyprintk=serial,hvc0",
+	"printk.devkmsg=on",
+	"loglevel=7",
+	"raid=noautodetect",
+	"init=/init",
+}
+
 func main() {
+	var cfg virt.Config
 	cmd := &cobra.Command{
 		Use:     "Launch a VM using macOS's Virtualization.framework",
 		Version: "v0.1",
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := run(); err != nil {
+			if err := run(cfg); err != nil {
 				fmt.Fprintln(os.Stderr, "ERROR:", err.Error())
 				os.Exit(1)
 			}
-
-			return
 		},
 	}
+
+	cmd.Flags().StringVar(&cfg.Kernel, "kernel", defKernelPath, "Path to the uncompressed kernel file")
+	cmd.Flags().StringVar(&cfg.Initramfs, "initramfs", defInitramfsPath, "Path to the kernel file (eg. initramfs)")
+	cmd.Flags().StringVar(&cfg.Cmdline, "cmdline", strings.Join(defCmdline, " "), "Kernel cmdline")
 
 	if err := cmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -34,8 +53,8 @@ func main() {
 	}
 }
 
-func run() error {
-	vm, err := virt.CreateVM()
+func run(cfg virt.Config) error {
+	vm, err := virt.CreateVM(cfg)
 	if err != nil {
 		return err
 	}

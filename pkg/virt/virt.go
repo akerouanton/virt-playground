@@ -4,28 +4,18 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/Code-Hex/vz/v3"
 )
 
-const (
-	kernelPath = "build/vmlinux"
-	initrdPath = "build/initramfs"
-)
-
-var cmdLine = []string{
-	"console=hvc0",
-	"root=/dev/ram0",
-	"earlyprintk=serial,hvc0",
-	"printk.devkmsg=on",
-	"loglevel=7",
-	"raid=noautodetect",
-	"init=/init",
+type Config struct {
+	Kernel    string
+	Initramfs string
+	Cmdline   string
 }
 
-func CreateVM() (*vz.VirtualMachine, error) {
-	vmConfig, err := createVMConfig()
+func CreateVM(cfg Config) (*vz.VirtualMachine, error) {
+	vmConfig, err := createVMConfig(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -38,10 +28,10 @@ func CreateVM() (*vz.VirtualMachine, error) {
 	return vm, nil
 }
 
-func createVMConfig() (*vz.VirtualMachineConfiguration, error) {
-	bootloader, err := vz.NewLinuxBootLoader(kernelPath,
-		vz.WithCommandLine(strings.Join(cmdLine, " ")),
-		vz.WithInitrd(initrdPath),
+func createVMConfig(cfg Config) (*vz.VirtualMachineConfiguration, error) {
+	bootloader, err := vz.NewLinuxBootLoader(cfg.Kernel,
+		vz.WithCommandLine(cfg.Cmdline),
+		vz.WithInitrd(cfg.Initramfs),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("creating linux bootloader: %w", err)
