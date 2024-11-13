@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -54,6 +55,10 @@ func main() {
 }
 
 func run(cfg virt.Config) error {
+	if err := validateConfig(&cfg); err != nil {
+		return err
+	}
+
 	vm, err := virt.CreateVM(cfg)
 	if err != nil {
 		return err
@@ -77,6 +82,49 @@ func run(cfg virt.Config) error {
 	})
 
 	return eg.Wait()
+}
+
+func validateConfig(cfg *virt.Config) error {
+	var cmdline []string
+	copy(cmdline, defCmdline)
+
+	if exists, err := fileExists(cfg.Kernel); err != nil {
+		return err
+	} else if !exists {
+		return errors.New("kernel not found")
+	}
+
+	if cfg.Initramfs != "" {
+		exists, err := fileExists(cfg.Initramfs)
+		if err != nil {
+			return err
+		}
+
+		if !exists {
+			return errors.New("initrd not found")
+		}
+	}
+
+	if cfg.Initramfs == "" {
+		return errors.New("missing --initramfs")
+	}
+
+	if cfg.Cmdline == "" {
+		cfg.Cmdline = strings.Join(cmdline, " ")
+	}
+
+	return nil
+}
+
+func fileExists(path string) (bool, error) {
+	fi, err := os.Stat(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	return fi.Mode().IsRegular(), nil
 }
 
 // https://developer.apple.com/documentation/virtualization/running_linux_in_a_virtual_machine?language=objc#:~:text=Configure%20the%20Serial%20Port%20Device%20for%20Standard%20In%20and%20Out
