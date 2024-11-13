@@ -47,7 +47,10 @@ COPY --from=build-busybox /lib/libc.musl-aarch64.so.1 /rootfs/lib/
 COPY init /rootfs/init
 
 RUN mknod -m 644 /rootfs/dev/random c 1 8 && \
-    mknod -m 644 /rootfs/dev/urandom c 1 9
+    mknod -m 644 /rootfs/dev/urandom c 1 9 && \
+    mknod -m 644 /rootfs/dev/null c 1 3 && \
+    mkdir /rootfs/tmp && \
+    ln -s /proc/mounts /rootfs/etc/mtab
 
 RUN mkdir /boot && \
     cd /rootfs && \

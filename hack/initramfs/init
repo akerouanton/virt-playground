@@ -2,5 +2,6 @@
 
 mount -t proc none /proc
 mount -t sysfs none /sys
+mount -t tmpfs tmpfs /tmp
 
 exec /bin/sh
