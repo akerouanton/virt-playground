@@ -67,6 +67,8 @@ while [ $# -ge 1 ]; do
         ;;
 
         *)
+            set +o xtrace
+
             echo "ERROR: Unsupported command '$1'"
             echo ""
 
