@@ -43,16 +43,27 @@ while [ $# -ge 1 ]; do
             # Compile BusyBox and generate an initramfs
             docker build \
                 --progress=plain \
-                --target=out \
+                --target=out-initramfs \
                 --build-arg=BUSYBOX_VERSION=${BUSYBOX_VERSION} \
                 --output=type=local,dest=build/ \
+                --file=hack/initramfs/Dockerfile.${VARIANT:-alpine} \
                 hack/initramfs
         ;;
 
         busybox-menuconfig)
-            ./hack/initramfs/make.sh make defconfig menuconfig
+            VARIANT=busybox ./hack/initramfs/make.sh make defconfig menuconfig
             # See http://lists.busybox.net/pipermail/busybox-cvs/2024-January/041752.html
             sed -i -e 's/CONFIG_TC=y/CONFIG_TC=n/' ./hack/initramfs/config
+        ;;
+
+        rootfs)
+            # Generate an initramfs
+            docker build \
+                --progress=plain \
+                --target=out-rootfs \
+                --output=type=local,dest=build/rootfs \
+                --file=hack/initramfs/Dockerfile.${VARIANT:-alpine} \
+                hack/initramfs
         ;;
 
         *)
@@ -66,7 +77,8 @@ while [ $# -ge 1 ]; do
             echo "    virt:               Build the 'virt' binary"
             echo "    kernel:             Build the kernel"
             echo "    kernel-menuconfig:  Open Kernel's menuconfig"
-            echo "    initramfs:          Build the 'init' binary and create the initramfs file"
+            echo "    initramfs:          Build the initramfs file"
+            echo "    rootfs:             Build an uncompressed / unarchived rootfs"
             echo "    busybox-menuconfig: Open BusyBox's menuconfig"
 
             exit 1

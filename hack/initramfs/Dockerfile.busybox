@@ -15,7 +15,7 @@ RUN mkdir /build && \
     cd /build && \
     git clone --depth 1 --branch ${BUSYBOX_VERSION} https://github.com/mirror/busybox
 
-# Copy kernel headers to make sure we've everything needed to compile in the
+# Copy kernel headers to make sure we've everything needed to compile the
 # 'build' target.
 COPY headers/ /usr/include/
 
@@ -58,6 +58,12 @@ RUN mkdir /boot && \
 
 ####################
 
-FROM scratch AS out
+FROM scratch AS out-initramfs
 
 COPY --from=build-rootfs /boot/ /
+
+####################
+
+FROM scratch AS out-rootfs
+
+COPY --from=base-rootfs --link / /
