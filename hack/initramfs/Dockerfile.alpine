@@ -1,6 +1,6 @@
 FROM alpine AS base-rootfs
 
-RUN apk add --no-cache qemu-guest-agent
+RUN apk add --no-cache bash qemu-guest-agent util-linux-misc
 
 COPY init /init
 
